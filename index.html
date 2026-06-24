@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Exam Hub</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
+        :root { --primary: #0A2540; --accent: #FFB800; --bg: #F8FAFC; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--primary); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .card { background: white; width: 100%; max-width: 400px; padding: 40px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-top: 6px solid var(--accent); }
+        h2 { font-weight: 800; text-align: center; margin-bottom: 30px; letter-spacing: -0.5px; }
+        .group { margin-bottom: 20px; }
+        label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #94A3B8; margin-bottom: 8px; display: block; }
+        input { width: 100%; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; font-size: 15px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; margin-top: 10px; }
+        .btn-main { background: var(--primary); color: white; }
+        .btn-check { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        #resultArea { margin-top: 25px; padding: 20px; border-radius: 12px; text-align: center; font-weight: 600; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>ELITE EXAM HUB</h2>
+    
+    <!-- Registration Form -->
+    <form id="paymentForm">
+        <div class="group"><label>Full Name</label><input type="text" id="fullName" required></div>
+        <div class="group"><label>Email Address</label><input type="email" id="email" required></div>
+        <div class="group"><label>WhatsApp Number</label><input type="tel" id="whatsapp" required></div>
+        <div class="group"><label>Sender's Bank Name</label><input type="text" id="senderName" required></div>
+        <button type="submit" class="btn btn-main">SUBMIT REGISTRATION</button>
+    </form>
+
+    <div style="margin: 30px 0; border-top: 1px solid #E2E8F0;"></div>
+
+    <!-- Status Checker -->
+    <div class="group"><label>Already Paid? Get PIN</label><input type="email" id="checkEmail" placeholder="Enter your email"></div>
+    <button class="btn btn-check" onclick="checkStatus()">CHECK MY PIN</button>
+    <div id="resultArea"></div>
+</div>
+
+<script>
+    const API = "https://sheetdb.io/api/v1/b0shc0drks3yf";
+
+    // Registration Logic
+    document.getElementById('paymentForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const data = { data: [{
+            Timestamp: new Date().toLocaleString(),
+            Name: document.getElementById('fullName').value,
+            Email: document.getElementById('email').value,
+            WhatsApp: document.getElementById('whatsapp').value,
+            SenderName: document.getElementById('senderName').value,
+            PaymentRef: "ELITE-" + Math.floor(Math.random()*900000),
+            PIN: "Pending",
+            Status: "Pending"
+        }]};
+        fetch(API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
+        .then(() => alert("Registration Received! Wait for admin approval."));
+    });
+
+    // Simple Email Check Logic
+    function checkStatus() {
+        const email = document.getElementById('checkEmail').value.trim();
+        const resDiv = document.getElementById('resultArea');
+        
+        if (!email) { alert("Please enter your email"); return; }
+
+        fetch(`${API}/search?Email=${email}`)
+        .then(res => res.json())
+        .then(data => {
+            resDiv.style.display = "block";
+            if (!data || data.length === 0) {
+                resDiv.style.background = "#FEF2F2"; 
+                resDiv.innerText = "No record found with this email.";
+            } else if (data[0].Status !== "Approved") {
+                resDiv.style.background = "#FFFBEB"; 
+                resDiv.innerText = "Status: Pending. Please wait for the admin to approve.";
+            } else {
+                resDiv.style.background = "#F0FDF4"; 
+                resDiv.innerHTML = `SUCCESS!<br>YOUR PIN: <span style="font-size:24px; color:var(--primary);">${data[0].PIN}</span>`;
+            }
+        });
+    }
+</script>
+</body>
+</html>
