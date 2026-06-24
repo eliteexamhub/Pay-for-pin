@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elite Exam Hub</title>
+    <title>Elite Exam Hub | Access Portal</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        
         :root { --primary: #0A2540; --accent: #FFB800; --bg: #F8FAFC; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--primary); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
         .card { background: white; width: 100%; max-width: 400px; padding: 40px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-top: 6px solid var(--accent); }
@@ -14,10 +13,22 @@
         .group { margin-bottom: 20px; }
         label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #94A3B8; margin-bottom: 8px; display: block; }
         input { width: 100%; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; font-size: 15px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; margin-top: 10px; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; margin-top: 10px; transition: 0.2s; }
         .btn-main { background: var(--primary); color: white; }
         .btn-check { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn:hover { opacity: 0.9; }
         #resultArea { margin-top: 25px; padding: 20px; border-radius: 12px; text-align: center; font-weight: 600; display: none; }
+        
+        /* Account Details Styling Box */
+        .account-box {
+            background: #F1F5F9;
+            border-left: 4px solid var(--accent);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .account-box p { margin: 5px 0; font-size: 14px; font-weight: 600; }
+        .price-tag { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 10px !important; }
     </style>
 </head>
 <body>
@@ -25,19 +36,27 @@
 <div class="card">
     <h2>ELITE EXAM HUB</h2>
     
-    <!-- Registration Form -->
+    <!-- ACCOUNT DETAILS SECTION -->
+    <div class="account-box">
+        <p class="price-tag">Amount: ₦500</p>
+        <label>Transfer to Account Below:</label>
+        <p><strong>Bank:</strong> Moniepoint</p>
+        <p><strong>Account No:</strong> 8027146892</p>
+        <p><strong>Name:</strong> Emmanuel Damilare Simon</p>
+    </div>
+
     <form id="paymentForm">
+        <input type="hidden" id="deviceId">
         <div class="group"><label>Full Name</label><input type="text" id="fullName" required></div>
         <div class="group"><label>Email Address</label><input type="email" id="email" required></div>
         <div class="group"><label>WhatsApp Number</label><input type="tel" id="whatsapp" required></div>
-        <div class="group"><label>Sender's Bank Name</label><input type="text" id="senderName" required></div>
+        <div class="group"><label>Sender's Bank Name</label><input type="text" id="senderName" placeholder="e.g.CHUKWUDI OGHENE MATHEW" required></div>
         <button type="submit" class="btn btn-main">SUBMIT REGISTRATION</button>
     </form>
 
     <div style="margin: 30px 0; border-top: 1px solid #E2E8F0;"></div>
 
-    <!-- Status Checker -->
-    <div class="group"><label>Already Paid? Get PIN</label><input type="email" id="checkEmail" placeholder="Enter your email"></div>
+    <div class="group"><label>Already Paid? Get PIN</label><input type="email" id="checkEmail" placeholder="Enter your registered email"></div>
     <button class="btn btn-check" onclick="checkStatus()">CHECK MY PIN</button>
     <div id="resultArea"></div>
 </div>
@@ -45,7 +64,11 @@
 <script>
     const API = "https://sheetdb.io/api/v1/b0shc0drks3yf";
 
-    // Registration Logic
+    // 1. Capture Device ID in the background
+    function getDeviceId() { return btoa([navigator.userAgent, screen.width, screen.height].join('-')); }
+    document.getElementById('deviceId').value = getDeviceId();
+
+    // 2. Registration Logic
     document.getElementById('paymentForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const data = { data: [{
@@ -55,14 +78,15 @@
             WhatsApp: document.getElementById('whatsapp').value,
             SenderName: document.getElementById('senderName').value,
             PaymentRef: "ELITE-" + Math.floor(Math.random()*900000),
+            DeviceId: document.getElementById('deviceId').value,
             PIN: "Pending",
             Status: "Pending"
         }]};
         fetch(API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
-        .then(() => alert("Registration Received! Wait for admin approval."));
+        .then(() => alert("Registration Received! Once your ₦500 payment is verified, your PIN will be approved. Check your status shortly."));
     });
 
-    // Simple Email Check Logic
+    // 3. PIN Retrieval (Email Match Only)
     function checkStatus() {
         const email = document.getElementById('checkEmail').value.trim();
         const resDiv = document.getElementById('resultArea');
@@ -78,7 +102,7 @@
                 resDiv.innerText = "No record found with this email.";
             } else if (data[0].Status !== "Approved") {
                 resDiv.style.background = "#FFFBEB"; 
-                resDiv.innerText = "Status: Pending. Please wait for the admin to approve.";
+                resDiv.innerText = "Status: Pending. Please wait for admin approval.";
             } else {
                 resDiv.style.background = "#F0FDF4"; 
                 resDiv.innerHTML = `SUCCESS!<br>YOUR PIN: <span style="font-size:24px; color:var(--primary);">${data[0].PIN}</span>`;
